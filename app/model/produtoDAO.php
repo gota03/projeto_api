@@ -1,41 +1,96 @@
 <?php
-
 namespace App\model;
 use App\model\Conexao;
 use Exception;
 
 class ProdutoDAO{
     private $tabela = "produto";
-
+    //get
     public function consultar(){
-        $sql = "SELECT * FROM {$this->tabela}";
-        $preparacao = Conexao::getConexao()->prepare($sql);
+        $comando = "SELECT * FROM {$this->tabela}";
+
+        $preparacao = Conexao::getConexao()->prepare($comando);
         $preparacao->execute();
 
-        if($preparacao->rowCount()>0){
+        if($preparacao->rowCount() > 0){
             return $preparacao->fetchALL(\PDO::FETCH_ASSOC);
         }
         else{
-            throw new \Exception("Nenhum dado encontrado no banco"); // ESTAMOS LANÇANDO UM ERRO PARA SER TRATADO PELO CATCH
+            throw new \Exception("Nenhum dado encontrado");// Estamos lançando um erro para ser tratado pelo catch
         }
     }
+    public function consultarUnico($id){
+        $comando = "SELECT * FROM {$this->tabela} WHERE cod_produto = :id";
 
+        $preparacao = Conexao::getConexao()->prepare($comando);
+        $preparacao->bindValue(":id",$id);
+        $preparacao->execute();
+
+        if($preparacao->rowCount() > 0){
+            return $preparacao->fetchALL(\PDO::FETCH_ASSOC);
+        }
+        else{
+            throw new \Exception("Nenhum dado encontrado");// Estamos lançando um erro para ser tratado pelo catch
+        }
+    }
+    //post
     public function inserir($dados){
-        $sql = "INSERT INTO {$this->tabela} VALUES(NULL, :nome, :preco, :info)";
-        $preparacao = Conexao::getConexao()->prepare($sql);
-        
+        $comando = "INSERT INTO {$this->tabela} VALUES(NULL,:nome, :preco, :info)";
 
-        $preparacao->bindValue(":nome", $dados["nome_produto"]);
-        $preparacao->bindValue(":preco", $dados["preco_produto"]);
-        $preparacao->bindValue(":info", $dados["info_produto"]);
+        $preparacao = Conexao::getConexao()->prepare($comando);
+
+        $preparacao->bindValue(":nome",$dados["nome_produto"]);
+        $preparacao->bindValue(":preco",$dados["preco_produto"]);
+        $preparacao->bindValue(":info",$dados["info_produto"]);
 
         $preparacao->execute();
 
-        if($preparacao->rowCount()>0){
+        if($preparacao->rowCount() > 0){
             return "Dados inseridos com sucesso";
         }
         else{
-            throw new \Exception("Dados não inseridos");
+            throw new \Exception("Erro ao cadastrar as informações");
+        }
+    }
+    //put
+    public function atualizar($id, $dados){
+        $comando = "UPDATE {$this->tabela} SET 
+        nome = :nome_produto,
+        preco = :preco_produto,
+        info_produto = :info WHERE cod_produto = :id";
+
+        $preparacao = Conexao::getConexao()->prepare($comando);
+
+        list($nome, $preco, $info) = array_values($dados);
+        
+        $preparacao->bindValue(':nome_produto', $nome);
+        $preparacao->bindValue(':preco_produto', $preco);
+        $preparacao->bindValue(':info', $info);
+        $preparacao->bindValue(':id', $id);
+
+        $preparacao->execute();
+        if($preparacao->rowCount() > 0){
+            return "Dados atualizados com sucesso";
+        }
+        else{
+            throw new \Exception("Erro ao tentar atualizar os dados");
+        }
+        
+    }
+    //delete
+    public function deletar($id){
+        $comando = "DELETE FROM {$this->tabela} WHERE cod_produto = :id";
+
+        $preparacao = Conexao::getConexao()->prepare($comando);
+        $preparacao->bindValue(":id", $id);
+
+        $preparacao->execute();
+
+        if($preparacao->rowCount() > 0){
+            return "Dados excluídos com sucesso";
+        }
+        else{
+            throw new \Exception("Erro ao tentar excluir os dados");
         }
     }
 }

@@ -1,52 +1,54 @@
 <?php
-header("Content-type: application/json"); // ALTERANDO O CABEÇALHO DO DOCUMENTO PARA SER UM ARQUIVO JSON
-header("Content-Control-Allow-Origin:*"); // ESTAMOS PERMITINDO O ACESSO LIVRE A NOSSA API
+header("Content-type: application/json");// Alterandoo cabeçalho do documento para ser um arquivo json
+header("Content-Control-Allow-Origin:*");// Estamos permitindo o acesso livre à nossa api.
+
 require_once("vendor/autoload.php");
-use App\controller\ProdutoController;
-//print_r($_GET);
-$rota = !empty($_GET["url"]) ? $_GET["url"] : "nada ainda" ; // VERIFICA SE A URL NAO ESTA VAZIA, SE ESTIVER EXIBE UM TEXTO CASO CONTRARIO ATRIBUI UM CONTEUDO NORMAL
-//echo $rota;
-$rota = explode("/",$rota ); // EXPLODE IRA CRIAR UM VETOR SEPARANDO AS INFORMACOES QUANDO ENCONTRAR UMA /
-//echo "<hr>";
-//print_r($rota);
-if($rota[0] === "api" ){
-    //echo "<hr>";
-    //echo "Chegou na api";
-    //echo "<hr>";
-    array_shift($rota);
+//use App\controller\ProdutoController;
+
+    //print_r($_GET);
+    $rota = !empty($_GET["url"]) ? $_GET["url"] : "Nada ainda";//  Verifica se a url não está vazia, se estiver exibe um texto  caso contrário atribui o conteúdo normal
+    //echo $rota;
+
+    $rota = explode("/",$rota);// explode irá criar um vetor separando as informações quando encontrar uma /
+
     //echo "<hr>";
     //print_r($rota);
-    // $meuProduto = new ProdutoController();
-    // echo "<hr>";
-    // $meuProduto->inicio();
-    // PEGANDO A INFORMACAO DO SERVICO QUE O USUARIO QUER ACESSAR
-    // ORGANIZANDO O CAMINHO PARA DEIXAR COM O MESMO NOME DA CLASSE DA PASTA CONTROLLER
-    //echo "<hr>";
-    if(!file_exists("App\controller\\".$rota[0]."Controller.php")){
-       // echo "<hr>";
-        //echo "Esse serviço não esta disponivel";
+    // Verificando se o usuário está querendo acessar a API
+    if($rota[0] === "api"){
+        //echo "Chegou na api <hr>";
+        array_shift($rota);
+        //print_r($rota);
+
+        // $meuProduto = new App\controller\ProdutoController();
+        // echo "<hr>";
+        // $meuProduto->inicio();
+
+        // Pegando a informação do serviço que o usuário quer acessar
+        if(!file_exists("App\controller\\".$rota[0]."Controller.php")){
+            //echo "<hr> esse serviço não está disponível";
+        }
+        else{
+            $servico = "App\controller\\".ucfirst($rota[0])."Controller";// Organizando o caminho para deixar com o mesmo nome da classe da pasta controller
+            //echo"<hr> {$servico}";
+        
+            array_shift($rota);
+            $verboHTTP = strtolower($_SERVER["REQUEST_METHOD"]);// está pegando o verbo HTTP, que é o método de envio dos dados, ou seja, GET, POST, PUT e DELETE
+            //echo "<hr> {$verboHTTP}";
+            try {
+                $resposta = call_user_func_array(array(new $servico, $verboHTTP), $rota);// Estamos instanciando  dinamicamente a classe ProdutoController e informando qual método da classe será executado, passando a variável $verboHTTP, que será get, post, put e delete. A variável $rota, será utilizada para passar o parâmetro para o método da nossa classe, seria algo como delete(1) ou put(1).
+
+                //print_r($resposta);
+                echo json_encode(array('status'=>'sucesso','data'=>$resposta),JSON_UNESCAPED_UNICODE);// JSON_UNESCAPED_UNICODE serve para exibir conteúdo com acentos e caracteres especiais
+            } catch (\Exception $erro) {
+                http_response_code(404);
+                echo json_encode(array('status'=>'erro','data'=>$erro->getMessage()));
+            }
+        }
+
+       
+
+
     }
     else{
-        $servico = "App\controller\\".ucfirst($rota[0])."Controller"; // ORGANIZANDO O CAMINHO PARA DEIXAR COM O MESMO NOME DA CLASSE DA PASTA CONTROLLER
-        //echo "<hr>";
-        //echo "{$servico}";
-        array_shift($rota);
-        $HTTP = strtolower($_SERVER["REQUEST_METHOD"]); // ESTA PEGANDO O VERBO HTTP QUE É O METODO DE ENVIO DOS DADOS OU SEJA GET POST PUT DELETE
-        //echo "<hr>";
-        //echo "{$HTTP}";
-        try {
-            $resposta = call_user_func_array(array(new $servico, $HTTP), $rota); // ESTAMOS INSTANCIANDO DINAMICAMENTE A CLASSE PRODUTOCONTROLLER E INFORMANDO QUAL METODO DA CLASSE SERA EXECUTADO PASSANDO A VARIAVEL $HTTP, QUE SERA GET,POST, PUT, DELETE. A VARIAVEL ROTA SERA UTILIZADA PARA PASSAR O PARAMETRO PARA O METODO DA NOSSA CLASSE SERIA ALGO COMO DELETE(1) OU PUT(1)
-            //echo "<hr>";
-            //echo $resposta;
-            echo json_encode(array('status'=>'sucesso','data'=>$resposta), JSON_UNESCAPED_UNICODE); // SERVE PARA EXIBIR CONTEUDO COM ACENTOS E CARACTERES ESPECIAIS
-        } catch (\Exception $error) {
-            http_response_code(404);
-            echo json_encode(array('status'=>'erro', 'data'=>$error->getMessage()));
-        }
+        //echo "Tá querendo acessar outra coisa né?";
     }
-   
-}
-else{
-    //echo "<hr>";
-    //echo "acessar outra coisa";
-}
